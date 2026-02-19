@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>FAQ & 問題報告</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <h1>FAQ & 問題報告</h1>
+
+  <div class="faq-section">
+    <div class="faq-item">
+      <div class="faq-question">Q. データはいつ更新される？</div>
+      <div class="faq-answer">
+        こまめな更新を心がけますが、週末のどちらかに更新をすることが多いです。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">Q. 検索しても出てこない曲がある</div>
+      <div class="faq-answer">
+        表記揺れの可能性があります。別表記もお試しください。<br>
+        <a href="https://wikiwiki.jp/mixstgirls/%E3%83%87%E3%83%BC%E3%82%BF%E3%83%99%E3%83%BC%E3%82%B9/%E6%AD%8C%E6%9E%A0%E6%83%85%E5%A0%B1" target="_blank">非公式wiki</a>なども活用することをおすすめします。<br>
+        どうしても見つからない場合は下の報告フォームよりご報告ください。
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">Q. 検索機能が全く動かなくなった</div>
+      <div class="faq-answer">
+        データ収納元の利用可能上限に達した可能性があります。最長だと翌月まで待つ必要があります。
+      </div>
+    </div>
+
+
+  </div>
+
+  <div class="faq-section" id="report">
+  <h2>問題報告</h2>
+  <p>
+    バグ・データ修正などのご連絡はこちらからお願いします。<br>
+    ※いただいた報告は順次確認していますが、対応までお時間をいただく場合があります。
+  </p>
+
+  <a href="https://forms.gle/G4PGrdtgJSE6Bp7k9"
+     target="_blank"
+     class="report-button">
+     問題を報告する
+  </a>
+</div>
+<script>
+document.querySelectorAll(".faq-question").forEach(q => {
+  q.addEventListener("click", () => {
+    q.nextElementSibling.classList.toggle("open");
+  });
+});
+</script>
+
+</body>
+</html>
