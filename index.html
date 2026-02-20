@@ -141,16 +141,30 @@ let currentSuggestions = [];
 let debounceTimer = null;
 
 async function loadSongCache() {
-    const { data, error } = await client
-        .from("songs")
-        .select("id, song, artist, song_normalized, artist_normalized");
+    let allData = [];
+    let from = 0;
+    const pageSize = 1000;
 
-    if (!error && data) {
-        songCache = data;
-        console.log("Song cache loaded:", songCache.length);
-    } else {
-        console.error(error);
+    while (true) {
+        const { data, error } = await client
+            .from("songs")
+            .select("id, song, artist, song_normalized, artist_normalized")
+            .range(from, from + pageSize - 1);
+
+        if (error) {
+            console.error(error);
+            break;
+        }
+
+        allData = allData.concat(data);
+
+        if (data.length < pageSize) break;
+
+        from += pageSize;
     }
+
+    songCache = allData;
+    console.log("Song cache loaded:", songCache.length);
 }
 
 function createSuggestionList(inputElement) {
@@ -167,10 +181,6 @@ function createSuggestionList(inputElement) {
     const songLengthOK = keyword.length >= 2;
 
     let results = [];
-
-    // =========================
-    // 発動条件判定
-    // =========================
 
     if (isSongInput) {
 
