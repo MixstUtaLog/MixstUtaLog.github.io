@@ -249,7 +249,7 @@ function createSuggestionList(inputElement) {
             a.localeCompare(b, "ja")
         );
 
-        currentSuggestions = uniqueArtists.slice(0, 10);
+        currentSuggestions = uniqueArtists.slice(0, 50);
 
         suggestionBox.innerHTML = currentSuggestions
             .map((artist, index) =>
