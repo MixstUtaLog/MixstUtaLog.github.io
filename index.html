@@ -13,14 +13,14 @@
 
         <div class="search-row">
             <div class="input-wrapper">
-                <input id="song" class="main-input" placeholder="曲名" oninput="validate()">
+                <input id="song" class="main-input" placeholder="曲名">
             </div>
 
             <div class="input-wrapper">
-                <input id="artist" class="main-input" placeholder="アーティスト名" oninput="validate()">
+                <input id="artist" class="main-input" placeholder="アーティスト名">
             </div>
 
-            <button id="searchBtn" onclick="search()" disabled>
+            <button id="searchBtn" disabled>
                 🔍 曲を探す
             </button>
         </div>
@@ -124,7 +124,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/main.js"></script>
+<script type="module" src="js/main.js"></script>
 
 </body>
 </html>
