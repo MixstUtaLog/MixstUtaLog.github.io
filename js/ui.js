@@ -1,7 +1,15 @@
 let currentData = [];
+let originalData = [];
 let currentPage = 1;
-let totalCount = 0;
 const pageSize = 100;
+
+let selectedSong = null;
+let selectedArtist = null;
+let selectedVtuber = null;
+
+let vtuberCountsForSelectedSong = new Map();
+
+let hasUserRefined = false;
 
 import { search } from "./api.js";
 
@@ -40,6 +48,31 @@ function getVtuberClass(name) {
         case "渚沢シチ": return "shichi";
         default: return "other";
     }
+}
+
+function getVtuberArray(row) {
+    return row.vtubers
+        ? row.vtubers.split(",").map(n => n.trim())
+        : [];
+}
+
+function refreshUI() {
+    updatePagination();
+    renderPage();
+    buildRefineArea();
+    renderBackButton();
+}
+
+function applyDefaultSort() {
+    const sortColumn = document.getElementById("sort_column");
+    const sortOrder = document.getElementById("sort_order");
+
+    if (sortColumn) sortColumn.value = "date";
+    if (sortOrder) sortOrder.value = "desc";
+
+    currentData.sort((a, b) =>
+        new Date(b.streamdate) - new Date(a.streamdate)
+    );
 }
 
 function render(data) {
@@ -106,7 +139,7 @@ function render(data) {
         prevBtn.addEventListener("click", () => changePage(currentPage - 1));
         nextBtn.addEventListener("click", () => changePage(currentPage + 1));
 
-        const maxPage = Math.ceil(totalCount / pageSize);
+        const maxPage = Math.ceil(currentData.length / pageSize);
         prevBtn.disabled = currentPage === 1;
         nextBtn.disabled = currentPage === maxPage;
     }
@@ -114,34 +147,28 @@ function render(data) {
 
 function renderPage() {
     const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const pageData = currentData.slice(start, end);
+    const pageData = currentData.slice(start, start + pageSize);
     render(pageData);
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function updatePagination() {
-    const maxPage = Math.ceil(totalCount / pageSize);
+    const maxPage = Math.ceil(currentData.length / pageSize) || 1;
+
     document.getElementById("resultControls").style.display = "flex";
     document.getElementById("pageInput").value = currentPage;
     document.getElementById("pageInput").max = maxPage;
     document.getElementById("maxPage").textContent = maxPage;
-    document.getElementById("totalCount").textContent = totalCount;
+    document.getElementById("totalCount").textContent = currentData.length;
 
-    const prevTop = document.getElementById("prevPage");
-    const nextTop = document.getElementById("nextPage");
-    if (prevTop) prevTop.disabled = currentPage === 1;
-    if (nextTop) nextTop.disabled = currentPage === maxPage;
-
+    document.getElementById("prevPage").disabled = currentPage === 1;
+    document.getElementById("nextPage").disabled = currentPage === maxPage;
 }
 
 function changePage(newPage) {
-    const maxPage = Math.ceil(totalCount / pageSize);
-    if (newPage < 1) newPage = 1;
-    if (newPage > maxPage) newPage = maxPage;
-    currentPage = newPage;
-    updatePagination();
-    renderPage();
+    const maxPage = Math.ceil(currentData.length / pageSize) || 1;
+    currentPage = Math.min(Math.max(newPage, 1), maxPage);
+    refreshUI();
 }
 
 function sortLocal() {
@@ -223,8 +250,8 @@ function collectSearchParams() {
 }
 
 async function handleSearch() {
+    resetRefineUI();
     const params = collectSearchParams();
-
     const resultDiv = document.getElementById("result");
     resultDiv.innerText = "検索中...";
 
@@ -236,22 +263,219 @@ async function handleSearch() {
         return;
     }
 
-    currentData = data;
-    totalCount = data.length;
+    originalData = [...data];
+    currentData = [...data];
 
-    const sortColumn = document.getElementById("sort_column");
-    const sortOrder = document.getElementById("sort_order");
-    if (sortColumn) sortColumn.value = "date";
-    if (sortOrder) sortOrder.value = "desc";
+    selectedSong = null;
+    selectedArtist = null;
+    selectedVtuber = null;
 
-    if (totalCount >= 500) {
+    hasUserRefined = false; 
+
+    currentPage = 1;
+
+    applyDefaultSort();
+
+    if (currentData.length >= 500) {
         document.getElementById("message").innerText =
             "※検索結果が500件に達しました。条件を絞ってください。";
     } else {
         document.getElementById("message").innerText = "";
     }
 
+    refreshUI();
+}
+
+function refineBySongArtist(song, artist) {
+    hasUserRefined = true; 
+    selectedSong = song;
+    selectedArtist = artist;
+    selectedVtuber = null;
+
+    currentData = originalData.filter(row =>
+        row.song === song && row.artist === artist
+    );
+
+    vtuberCountsForSelectedSong.clear();
+    currentData.forEach(row => {
+        getVtuberArray(row).forEach(name => {
+            vtuberCountsForSelectedSong.set(
+                name,
+                (vtuberCountsForSelectedSong.get(name) || 0) + 1
+            );
+        });
+    });
+
     currentPage = 1;
-    updatePagination();
-    renderPage();
+    applyDefaultSort(); 
+    refreshUI();
+}
+
+function refineByVtuber(name) {
+    hasUserRefined = true; 
+    selectedVtuber = name;
+
+    const baseData = selectedSong
+        ? originalData.filter(row =>
+            row.song === selectedSong &&
+            row.artist === selectedArtist
+        )
+        : currentData;
+
+    currentData = baseData.filter(row =>
+        getVtuberArray(row).includes(name)
+    );
+
+    currentPage = 1;
+    applyDefaultSort(); 
+    refreshUI();
+}
+
+function goBackRefine() {
+    if (selectedVtuber) {
+        selectedVtuber = null;
+        hasUserRefined = true;
+        refineBySongArtist(selectedSong, selectedArtist);
+        return;
+    }
+
+    selectedSong = null;
+    selectedArtist = null;
+    selectedVtuber = null;
+
+    hasUserRefined = false; 
+    currentData = [...originalData];
+    currentPage = 1;
+
+    refreshUI();
+}
+
+function renderBackButton() {
+    const wrapper = document.getElementById("refineWrapper");
+    let backBtn = document.getElementById("refineBackBtn");
+
+    if (!backBtn) {
+        backBtn = document.createElement("button");
+        backBtn.id = "refineBackBtn";
+        backBtn.className = "refine-btn back-btn";
+        backBtn.innerText = "← 1つ前に戻る";
+        backBtn.onclick = goBackRefine;
+        wrapper.prepend(backBtn);
+    }
+
+    backBtn.style.display = hasUserRefined ? "inline-block" : "none";
+}
+
+function resetRefineUI() {
+    const container = document.getElementById("refineArea");
+    const label = document.getElementById("refineLabel");
+
+    container.innerHTML = "";
+    label.innerText = "";
+
+    selectedSong = null;
+    selectedArtist = null;
+    selectedVtuber = null;
+    hasUserRefined = false;
+
+    renderBackButton();
+}
+
+function buildRefineArea() {
+    const container = document.getElementById("refineArea");
+    container.innerHTML = "";
+
+   if (!currentData.length || currentData.length >= 500) {
+        label.innerText = ""; 
+        return;
+    }
+
+    const unique = new Set(
+        originalData.map(row => `${row.song}|||${row.artist}`)
+    );
+
+    if (!selectedSong && unique.size > 1) {
+        buildSongArtistSummary();
+        return;
+    }
+
+    if (!selectedSong && unique.size === 1) {
+        const [song, artist] = [...unique][0].split("|||");
+        selectedSong = song;
+        selectedArtist = artist;
+    }
+
+    renderVtuberSummary();
+}
+
+function buildSongArtistSummary() {
+    const map = new Map();
+
+    currentData.forEach(row => {
+        const key = `${row.song}|||${row.artist}`;
+        map.set(key, (map.get(key) || 0) + 1);
+    });
+
+    const summary = Array.from(map.entries())
+        .map(([key, count]) => {
+            const [song, artist] = key.split("|||");
+            return { song, artist, count };
+        })
+        .sort((a, b) => b.count - a.count);
+
+    renderSummary(summary, "songArtist");
+}
+
+function renderVtuberSummary() {
+
+    const songBase = originalData.filter(row =>
+        row.song === selectedSong &&
+        row.artist === selectedArtist
+    );
+
+    const map = new Map();
+
+    songBase.forEach(row => {
+        getVtuberArray(row).forEach(name => {
+            map.set(name, (map.get(name) || 0) + 1);
+        });
+    });
+
+    const summary = Array.from(map.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+    renderSummary(summary, "vtuber");
+}
+
+function renderSummary(summary, type) {
+    const area = document.getElementById("refineArea");
+    const label = document.getElementById("refineLabel");
+
+    label.innerText =
+        type === "songArtist"
+            ? "▼ 曲でさらに絞り込む:"
+            : "▼ メンバーでさらに絞り込む:";
+
+    summary.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "refine-btn";
+
+        if (type === "songArtist") {
+            btn.innerText =
+                `${item.song} (${item.artist}) : ${item.count}件`;
+            btn.onclick = () =>
+                refineBySongArtist(item.song, item.artist);
+        } else {
+            btn.innerText =
+                `${item.name} : ${item.count}件`;
+            btn.onclick = () =>
+                refineByVtuber(item.name);
+            btn.classList.add(getVtuberClass(item.name)); 
+            if (item.name === selectedVtuber) 
+                btn.classList.add("active-refine");
+        }
+
+        area.appendChild(btn);
+    });
 }
