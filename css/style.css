@@ -606,6 +606,40 @@ textarea {
     color: #ffffff;
 }
 
+.top-nav {
+    background: linear-gradient(to bottom, #f7f8ff, #eef2ff);
+    border-bottom: 1px solid #e5e9ff;
+    padding: 18px 24px;
+    box-shadow: 0 6px 25px rgba(79, 70, 229, 0.1);
+}
+
+.nav-links {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    gap: 28px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    color: #4338ca;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.nav-links a:hover {
+    background: rgba(79, 70, 229, 0.08);
+    color: #4f46e5;
+}
+
+.nav-links a.active {
+    background: #4f46e5;
+    color: #ffffff;
+}
+
 @media (max-width: 640px) {
     .search-row {
         flex-direction: column;
@@ -658,5 +692,132 @@ textarea {
     .refine-btn {
         padding: 4px 10px;
         font-size: 13px;
+    }
+
+   .top-nav {
+        padding: 14px 16px;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .nav-links a {
+        font-size: 14px;
+    }
+    
+}
+
+/* ========== */
+
+#refineBoxes {
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.artist-refine-box {
+    flex: 1;
+    min-width: 280px;
+    background: #ffffff;
+    border: 1px solid #eef0ff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(99,102,241,0.08);
+}
+
+.artist-refine-box h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #4b5563;
+}
+
+.artist-refine-area {
+    max-height: 300px; 
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+}
+
+#artistPagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 24px auto;
+}
+
+#activeFilters {
+    background: #ffffff;
+    border: 1px solid #eef0ff;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 20px rgba(99,102,241,0.08);
+}
+
+#activeFilters > div:first-child {
+    font-size: 14px;
+    font-weight: 700;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.filter-tag {
+    display: inline-block;
+    padding: 6px 14px;
+    margin: 4px 8px 4px 0;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.25s ease;
+
+    background: #e0e7ff; 
+    color: #4338ca;
+    box-shadow: 0 4px 10px rgba(99,102,241,0.15);
+}
+
+.filter-tag:hover {
+    background: #6366f1;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(99,102,241,0.25);
+    transform: translateY(-1px);
+}
+
+.filter-tag:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(99,102,241,0.2);
+}
+
+.filter-tag.song-filter {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.filter-tag.vtuber-filter {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+
+@media (max-width: 640px) {
+     #refineBoxes {
+        flex-direction: column;
+    }
+
+    #activeFilters {
+        padding: 12px;
+    }
+
+    .filter-tag {
+        font-size: 13px;
+        padding: 5px 12px;
     }
 }

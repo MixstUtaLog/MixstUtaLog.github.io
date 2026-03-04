@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アーティスト別検索</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<header class="top-nav">
+    <div class="nav-inner">
+        <nav class="nav-links">
+            <a href="../">検索</a>
+            <a href="index.html" class="active">アーティスト別</a>
+        </nav>
+    </div>
+</header>
+
+
+<div class="container">
+
+  <div class="search-panel">
+    <h2 style="text-align:center; margin-bottom:20px;">
+      アーティスト別検索
+    </h2>
+
+    <div style="text-align:center; margin-bottom:20px;">
+    <select id="artistSelect" class="refine-btn">
+        <option value="ヨルシカ" selected>ヨルシカ</option>
+        <!-- 随時追加 -->
+    </select>
+    </div>
+
+    <div id="refineBoxes">
+
+      <div class="artist-refine-box">
+        <h3>メンバーで絞り込み</h3>
+        <div id="vtuberRefineBox" class="artist-refine-area"></div>
+      </div>
+
+      <div class="artist-refine-box">
+        <h3>曲で絞り込み</h3>
+        <div id="songRefineBox" class="artist-refine-area"></div>
+      </div>
+
+    </div>
+
+    <div id="activeFilters"></div>
+
+    <div style="text-align:center; margin-top:16px;">
+      <button id="artistBackBtn" class="refine-btn back-btn" style="display:none;">
+        ← 1つ前に戻る
+      </button>
+    </div>
+
+  </div>
+
+  <div id="artistResult"></div>
+  <div id="artistPagination"></div>
+
+</div>
+
+<footer class="footer">
+  <a href="../FAQ/"
+    target = "_blank">FAQ</a> |
+  <a href="https://forms.gle/G4PGrdtgJSE6Bp7k9"
+    target="_blank">問題報告</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="/js/features/search/index.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="../js/features/artist/index.js"></script>
+
+</body>
+</html>
