@@ -1,195 +1,151 @@
-import { songCache } from "./api.js";
+import { fetchSuggestSong, fetchSuggestArtist } from "./api.js";
 
-let activeIndex = -1;
-let currentSuggestions = [];
 let debounceTimer = null;
+let activeIndex = -1;
+let suggestions = [];
 
-function createSuggestionList(inputElement) {
+let requestId = 0;
+const suggestCache = new Map();
 
-    const suggestionBox = inputElement.nextElementSibling;
-    const keyword = inputElement.value.trim().toLowerCase();
-    const isSongInput = inputElement.id === "song";
-    const isArtistInput = inputElement.id === "artist";
+const DEBOUNCE_MS = 500;
+const MIN_LENGTH = 2;
 
-    const artistInputRaw = document.getElementById("artist").value.trim();
-    const artistInput = artistInputRaw.toLowerCase();
+function createList(input){
 
-    const artistLengthOK = artistInput.length >= 2;
-    const songLengthOK = keyword.length >= 2;
+  const box = input.nextElementSibling;
+  const keyword = input.value.trim();
 
-    let results = [];
+  if(keyword.length < MIN_LENGTH){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
 
-    if (isSongInput) {
+  const isSong = input.id === "song";
+  const songValue = document.getElementById("song").value.trim();
+  const artistValue = document.getElementById("artist").value.trim();
 
-        if (songLengthOK) {
-            results = songCache.filter(item =>
-                item.song_normalized.includes(keyword)
-            );
-        }
-        else if (!songLengthOK && artistLengthOK) {
-            results = songCache.filter(item =>
-                item.artist_normalized.includes(artistInput)
-            );
-        }
-        else {
-            suggestionBox.style.display = "none";
-            suggestionBox.innerHTML = "";
-            return;
-        }
+  const cacheKey = `${isSong}|${keyword}|${songValue}|${artistValue}`;
 
-        if (artistLengthOK) {
-            results = results.filter(item =>
-                item.artist_normalized.includes(artistInput)
-            );
-        }
+  if(suggestCache.has(cacheKey)){
+    render(box, suggestCache.get(cacheKey), isSong);
+    return;
+  }
 
-        results.sort((a, b) =>
-            a.song.localeCompare(b.song, "ja")
-        );
+  const id = ++requestId;
 
-        currentSuggestions = results.slice(0, 50);
+  (async ()=>{
 
-        suggestionBox.innerHTML = currentSuggestions
-            .map((item, index) =>
-                `<div class="suggest-item" data-index="${index}">
-                    ${item.song}
-                </div>`
-            )
-            .join("");
+    let results;
 
-    }
+    if(isSong)
+      results = await fetchSuggestSong(keyword, artistValue);
+    else
+      results = await fetchSuggestArtist(keyword, songValue);
 
-    else if (isArtistInput) {
+    if(id !== requestId) return;
 
-        if (!songLengthOK) {
-            suggestionBox.style.display = "none";
-            suggestionBox.innerHTML = "";
-            return;
-        }
+    suggestCache.set(cacheKey, results);
 
-        results = songCache.filter(item =>
-            item.artist_normalized.includes(keyword)
-        );
+    render(box, results, isSong);
 
-        const map = new Map();
-
-        results.forEach(item => {
-            const key = item.artist_normalized;
-            if (!map.has(key)) {
-                map.set(key, item.artist);
-            }
-        });
-
-        const uniqueArtists = Array.from(map.values());
-
-        uniqueArtists.sort((a, b) =>
-            a.localeCompare(b, "ja")
-        );
-
-        currentSuggestions = uniqueArtists.slice(0, 50);
-
-        suggestionBox.innerHTML = currentSuggestions
-            .map((artist, index) =>
-                `<div class="suggest-item" data-index="${index}">
-                    ${artist}
-                </div>`
-            )
-            .join("");
-    }
-
-    if (!currentSuggestions.length) {
-        suggestionBox.style.display = "none";
-        suggestionBox.innerHTML = "";
-        return;
-    }
-
-    suggestionBox.style.display = "block";
-    activeIndex = -1;
+  })();
 }
 
-export function attachSuggest(inputId) {
+function render(box, results, isSong){
 
-    const input = document.getElementById(inputId);
-    const suggestionBox = document.createElement("div");
-    suggestionBox.className = "suggest-box";
-    input.parentNode.appendChild(suggestionBox);
+  suggestions = results;
 
-    input.addEventListener("input", () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            createSuggestionList(input);
-        }, 300);
-    });
+  box.innerHTML = results.map((r,i)=>
+    `<div class="suggest-item" data-i="${i}">
+      ${isSong ? r.song : r.artist}
+    </div>`
+  ).join("");
 
-    input.addEventListener("keydown", (e) => {
-
-        if (!currentSuggestions.length) return;
-
-        const items = suggestionBox.querySelectorAll(".suggest-item");
-
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            activeIndex = (activeIndex + 1) % items.length;
-            updateActive(items);
-        }
-
-        if (e.key === "ArrowUp") {
-            e.preventDefault();
-            activeIndex = (activeIndex - 1 + items.length) % items.length;
-            updateActive(items);
-        }
-
-        if (e.key === "Enter") {
-            if (activeIndex >= 0) {
-                e.preventDefault();
-                selectSuggestion(input, currentSuggestions[activeIndex]);
-            }
-        }
-
-        if (e.key === "Escape") {
-            suggestionBox.style.display = "none";
-        }
-    });
-
-    suggestionBox.addEventListener("click", (e) => {
-        const item = e.target.closest(".suggest-item");
-        if (!item) return;
-
-        const index = Number(item.dataset.index);
-        selectSuggestion(input, currentSuggestions[index]);
-    });
-
-    document.addEventListener("click", (e) => {
-        if (!input.contains(e.target) && !suggestionBox.contains(e.target)) {
-            suggestionBox.style.display = "none";
-        }
-    });
-
-    input.addEventListener("focus", () => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            createSuggestionList(input);
-        }, 300);
-    });
+  activeIndex = -1;
+  box.style.display = results.length ? "block" : "none";
 }
 
-function updateActive(items) {
-    items.forEach(item => item.classList.remove("active"));
-    if (activeIndex >= 0) {
-        items[activeIndex].classList.add("active");
+export function attachSuggest(id){
+
+  const input = document.getElementById(id);
+
+  const box = document.createElement("div");
+  box.className = "suggest-box";
+
+  input.parentNode.appendChild(box);
+
+  input.addEventListener("input",()=>{
+
+    clearTimeout(debounceTimer);
+
+    debounceTimer =
+      setTimeout(()=>createList(input), DEBOUNCE_MS);
+
+  });
+
+  input.addEventListener("keydown",(e)=>{
+
+    const items = box.querySelectorAll(".suggest-item");
+    if(!items.length) return;
+
+    if(e.key==="ArrowDown"){
+      e.preventDefault();
+      activeIndex=(activeIndex+1)%items.length;
+      update(items);
     }
+
+    if(e.key==="ArrowUp"){
+      e.preventDefault();
+      activeIndex=(activeIndex-1+items.length)%items.length;
+      update(items);
+    }
+
+    if(e.key==="Enter" && activeIndex>=0){
+      e.preventDefault();
+      select(input, suggestions[activeIndex]);
+    }
+
+    if(e.key==="Escape"){
+      box.style.display="none";
+    }
+
+  });
+
+  box.addEventListener("click",(e)=>{
+
+    const item = e.target.closest(".suggest-item");
+    if(!item) return;
+
+    const i = Number(item.dataset.i);
+    select(input, suggestions[i]);
+
+  });
+
+  document.addEventListener("click",(e)=>{
+
+    if(!input.contains(e.target) && !box.contains(e.target))
+      box.style.display="none";
+
+  });
+
 }
 
-function selectSuggestion(input, item) {
+function update(items){
 
-    if (input.id === "song") {
-        input.value = item.song;
-        document.getElementById("artist").value = item.artist;
-    }
+  items.forEach(i=>i.classList.remove("active"));
 
-    if (input.id === "artist") {
-        input.value = item;
-    }
+  if(activeIndex>=0)
+    items[activeIndex].classList.add("active");
 
-    input.nextElementSibling.style.display = "none";
+}
+
+function select(input,item){
+
+  if(input.id==="song")
+    input.value=item.song;
+  else
+    input.value=item.artist;
+
+  input.nextElementSibling.style.display="none";
 }

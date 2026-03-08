@@ -1,13 +1,17 @@
 export const state = {
+
   currentData: [],
-  originalData: [],
   currentPage: 1,
-  pageSize: 100,
+  pageSize: 50,
+  totalCount: 0,
 
-  selectedSong: null,
-  selectedArtist: null,
-  selectedVtuber: null,
+  lastParams: null,
+  baseParams: null,
 
-  vtuberCountsForSelectedSong: new Map(),
-  hasUserRefined: false
+  refineLevel: 0,
+  autoSongRefine: false,
+
+  vtuberRefineCache: null,
+  songRefineCache: null
+
 };

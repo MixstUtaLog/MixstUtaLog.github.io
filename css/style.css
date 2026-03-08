@@ -1,6 +1,6 @@
 body {
     font-family: "M PLUS Rounded 1c", "Noto Sans JP", "Segoe UI", "Hiragino Sans", sans-serif;
-    background: #f4f6ff;
+    background: #f7f8fc;
     margin: 0;
     color: #1f2937; 
 }
@@ -17,7 +17,7 @@ h1 {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 0 16px; 
 }
@@ -28,7 +28,7 @@ h1 {
     border: 1px solid #e5e9ff;
     padding: 24px 24px 12px 24px;
     border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     margin-top: 30px;
     margin-bottom: 30px;
    
@@ -46,9 +46,9 @@ input[type="date"],
 select {
     padding: 10px 14px;
     border-radius: 12px;
-    border: 1.5px solid #d1d5db;
+    border: 1px solid #e5e7eb;
     font-size: 16px;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.15s ease;
 }
 
 input[type="text"]:focus,
@@ -71,7 +71,7 @@ select:focus {
     box-sizing: border-box; 
     font-size: 16px;
     border-radius: 12px;
-    border: 1.5px solid #d1d5db;
+    border: 1px solid #e5e7eb;
 }
 
 button {
@@ -79,12 +79,12 @@ button {
     color: white;
     border: none;
     padding: 12px 28px;
-    border-radius: 14px;
+    border-radius: 10px;
     font-weight: 700;
     font-size: 16px;
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
-    transition: background 0.3s ease;
+    transition: background 0.15s ease;
     flex-shrink: 0;
 }
 
@@ -149,7 +149,7 @@ button:hover:not(:disabled) {
     color: #4b5563;
     cursor: pointer;
     user-select: none;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .vtuber-list input[type="checkbox"]:checked + label.ito { 
@@ -223,7 +223,7 @@ button:hover:not(:disabled) {
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.15s;
   width: 300px;
   text-align: left;
 }
@@ -249,14 +249,14 @@ button:hover:not(:disabled) {
     display: none; 
     justify-content: space-between;
     align-items: center;
-    max-width: 900px;
+    max-width: 1000px;
     margin: 16px auto;
     flex-wrap: wrap;
     gap: 12px;
 }
 
 #bottomPagination {
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     gap: 8px;
@@ -286,7 +286,7 @@ button:hover:not(:disabled) {
     color: white;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background 0.15s ease;
 }
 
 #resultControls button:disabled,
@@ -305,16 +305,17 @@ button:hover:not(:disabled) {
 .card {
     background: #fff;
     border: 1px solid #eef0ff;
-    padding: 16px;
+    padding: 18px;
     border-radius: 16px;
     margin-bottom: 14px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-    transition: box-shadow 0.2s ease;
+    transition: box-shadow 0.15s ease;
     border: none;
 }
 
 .card:hover {
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
 .card-title {
@@ -326,7 +327,7 @@ button:hover:not(:disabled) {
 .card-title a {
     text-decoration: none;
     color: #6366f1;
-    transition: color 0.2s ease;
+    transition: color 0.15s ease;
 }
 
 .card-title a:hover {
@@ -485,7 +486,7 @@ textarea {
   min-height: 120px;
   padding: 12px;
   border-radius: 12px;
-  border: 1.5px solid #d1d5db;
+  border: 1px solid #e5e7eb;
   margin-top: 12px;
   margin-bottom: 12px;
   font-size: 14px;
@@ -501,7 +502,7 @@ textarea {
   border-radius: 14px;
   text-decoration: none;
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
-  transition: background 0.3s ease;
+  transition: background 0.15s ease;
 }
 
 .report-button:hover {
@@ -545,12 +546,12 @@ textarea {
     font-size: 14px;
     font-weight: 600;
     border-radius: 12px;
-    border: none;
+    border: 1px solid #e5e7eb;
     background: #e5e7eb;
     color: #1f2937;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(99,102,241,0.1);
+    transition: all 0.15s ease;
+    box-shadow: none;
     white-space: nowrap;
     line-height: 1.4;   
     text-align: center;
@@ -570,7 +571,7 @@ textarea {
 .refine-btn.myao:hover   { background:#fdd23e; color:#000000; }
 .refine-btn.iori:hover   { background:#fae7fc; color:#9c5f9a; }
 .refine-btn.shichi:hover { background:#dcfce7; color:#15803d; }
-.refine-btn.other:hover {background:#e0f2fe;color:#0369a1;}
+.refine-btn.other:hover  { background:#4f46e5;color:#fff;}
 
 .refine-btn:active {
     background: #4f46e5;
@@ -586,7 +587,7 @@ textarea {
 .refine-btn.active-refine.myao   { background:#fdd23e; color:#000000; }
 .refine-btn.active-refine.iori   { background:#fae7fc; color:#9c5f9a; }
 .refine-btn.active-refine.shichi { background:#dcfce7; color:#15803d; }
-.refine-btn.active-refine.other  {background:#e0f2fe;color:#0369a1;}
+.refine-btn.active-refine.other  { background:#4f46e5;color:#fff;}
 
 .refine-btn:disabled {
     background: #bbb;
@@ -597,7 +598,7 @@ textarea {
 .back-btn {
     background: #ffffff;
     color: #4f46e5;
-    border: 1.5px solid #4f46e5;
+    border: 1px solid #4f46e5;
     box-shadow: 0 4px 10px rgba(99,102,241,0.1);
 }
 
@@ -627,7 +628,7 @@ textarea {
     color: #4338ca;
     padding: 6px 10px;
     border-radius: 8px;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .nav-links a:hover {
@@ -707,117 +708,4 @@ textarea {
         font-size: 14px;
     }
     
-}
-
-/* ========== */
-
-#refineBoxes {
-    display: flex;
-    gap: 24px;
-    justify-content: space-between;
-    flex-wrap: wrap;
-}
-
-.artist-refine-box {
-    flex: 1;
-    min-width: 280px;
-    background: #ffffff;
-    border: 1px solid #eef0ff;
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 6px 20px rgba(99,102,241,0.08);
-}
-
-.artist-refine-box h3 {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: #4b5563;
-}
-
-.artist-refine-area {
-    max-height: 300px; 
-    overflow-y: auto;
-    padding: 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #fff;
-}
-
-#artistPagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    margin: 24px auto;
-}
-
-#activeFilters {
-    background: #ffffff;
-    border: 1px solid #eef0ff;
-    border-radius: 16px;
-    padding: 14px 16px;
-    margin-bottom: 18px;
-    box-shadow: 0 6px 20px rgba(99,102,241,0.08);
-}
-
-#activeFilters > div:first-child {
-    font-size: 14px;
-    font-weight: 700;
-    color: #4b5563;
-    margin-bottom: 8px;
-}
-
-.filter-tag {
-    display: inline-block;
-    padding: 6px 14px;
-    margin: 4px 8px 4px 0;
-    border-radius: 9999px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.25s ease;
-
-    background: #e0e7ff; 
-    color: #4338ca;
-    box-shadow: 0 4px 10px rgba(99,102,241,0.15);
-}
-
-.filter-tag:hover {
-    background: #6366f1;
-    color: #ffffff;
-    box-shadow: 0 6px 16px rgba(99,102,241,0.25);
-    transform: translateY(-1px);
-}
-
-.filter-tag:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(99,102,241,0.2);
-}
-
-.filter-tag.song-filter {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-.filter-tag.vtuber-filter {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-
-@media (max-width: 640px) {
-     #refineBoxes {
-        flex-direction: column;
-    }
-
-    #activeFilters {
-        padding: 12px;
-    }
-
-    .filter-tag {
-        font-size: 13px;
-        padding: 5px 12px;
-    }
 }

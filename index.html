@@ -6,14 +6,6 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="top-nav">
-    <div class="nav-inner">
-        <nav class="nav-links">
-            <a href="index.html" class="active">検索</a>
-            <a href="Artist/">アーティスト別</a>
-        </nav>
-    </div>
-</header>
 
 <div class="container">
 
@@ -28,7 +20,7 @@
                 <input id="artist" class="main-input" placeholder="アーティスト名">
             </div>
 
-            <button id="searchBtn" disabled>
+            <button id="searchBtn">
                 🔍 曲を探す
             </button>
         </div>
@@ -95,6 +87,7 @@
     <div id="message"></div>
 
     <div id="refineWrapper">
+    <button id="refineBackBtn" class="back-btn" style="display:none;">←戻る</button>
     <div id="refineLabel"></div>
     <div id="refineArea"></div>
 </div>
@@ -126,6 +119,11 @@
     </div>
 
     <div id="result"></div>
+
+    <div id="bottomPagination">
+        <button id="prevPageBottom">◀</button>
+        <button id="nextPageBottom">▶</button>
+    </div>
 
 </div>
 

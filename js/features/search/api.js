@@ -1,40 +1,61 @@
 import { client } from "../../shared/supabaseClient.js";
 
-export let songCache = [];
+export async function search(params){
 
-export async function loadSongCache() {
-  let allData = [];
-  let from = 0;
-  const pageSize = 1000;
+  const { data, error } =
+    await client.rpc("search_song_streams", params);
 
-  while (true) {
-    const { data, error } = await client
-      .from("songs")
-      .select("id, song, artist, song_normalized, artist_normalized")
-      .range(from, from + pageSize - 1);
+  if(error) throw new Error(error.message);
 
-    if (error) {
-      console.error(error);
-      break;
-    }
-
-    allData = allData.concat(data);
-
-    if (data.length < pageSize) break;
-
-    from += pageSize;
-  }
-
-  songCache = allData;
+  return data || [];
 }
 
-export async function search(params) {
-  const { data, error } = await client.rpc(
-    "search_song_streams",
-    params
-  );
 
-  if (error) throw new Error(error.message);
+export async function fetchSuggestSong(keyword, artist){
+
+  const { data, error } =
+    await client.rpc("suggest_song", {
+      p_keyword: keyword || null,
+      p_artist: artist || null
+    });
+
+  if(error) throw new Error(error.message);
+
+  return data || [];
+}
+
+
+export async function fetchSuggestArtist(keyword, song){
+
+  const { data, error } =
+    await client.rpc("suggest_artist", {
+      p_keyword: keyword || null,
+      p_song: song || null
+    });
+
+  if(error) throw new Error(error.message);
+
+  return data || [];
+}
+
+
+export async function fetchRefineSongArtist(params){
+
+  const { data, error } =
+    await client.rpc("refine_song_artist", params);
+
+  if(error) throw new Error(error.message);
+
+  return data || [];
+}
+
+
+export async function fetchRefineVtuber(params){
+
+  const { data, error } =
+    await client.rpc("refine_vtuber", params);
+
+  if(error) throw new Error(error.message);
 
   return data || [];
 }
