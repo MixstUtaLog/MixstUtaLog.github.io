@@ -309,113 +309,124 @@ async function buildRefineArea(){
   dom.refineArea.innerHTML="";
   dom.refineLabel.innerText="";
 
+  if(state.refineLevel===0){
+    await buildRefineSongArtist();
+    return;
+  }
+
+  if(state.refineLevel>=1){
+    await buildRefineVtuber();
+  }
+}
+
+
+async function buildRefineSongArtist(){
+
+  const {
+    p_song,p_artist,p_vtuber_ids,p_vtuber_mode,
+    p_external_mode,p_date_from,p_date_to
+  }=state.lastParams;
+
   if(!state.songRefineCache){
-
-    const {p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to}
-      =state.lastParams;
-
-    state.songRefineCache =
-      await fetchRefineSongArtist({
-        p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to
-      });
+    state.songRefineCache = await fetchRefineSongArtist({
+      p_song,p_artist,p_vtuber_ids,p_vtuber_mode,
+      p_external_mode,p_date_from,p_date_to
+    });
   }
 
   const songs=state.songRefineCache;
 
-  if(songs.length>1){
-
-    dom.refineLabel.innerText="▼ 曲で絞り込み";
-
-    songs.forEach(s=>{
-      dom.refineArea.appendChild(createRefineBtn(
-        `${s.song} (${s.artist}) : ${s.count}`,
-        async()=>{
-          state.lastParams.p_song=s.song;
-          state.lastParams.p_artist=s.artist;
-
-          state.refineLevel=1;
-          state.autoSongRefine=false;
-          state.vtuberRefineCache=null;
-
-          await runSearch(1);
-          await buildRefineVtuber();
-        }
-      ));
-    });
-
-    return;
-  }
+  if(!songs.length) return;
 
   if(songs.length===1){
 
-    state.lastParams.p_song=songs[0].song;
-    state.lastParams.p_artist=songs[0].artist;
+    const s=songs[0];
+
+    state.lastParams.p_song=s.song;
+    state.lastParams.p_artist=s.artist;
 
     state.refineLevel=1;
     state.autoSongRefine=true;
 
     await runSearch(1);
-    await buildRefineVtuber();
+    await buildRefineArea();
+
+    return;
   }
+
+  dom.refineLabel.innerText="▼ 曲で絞り込み";
+
+  songs.forEach(s=>{
+
+    const btn=createRefineBtn(
+      `${s.song} (${s.artist}) : ${s.count}`,
+      async ()=>{
+
+        state.lastParams.p_song=s.song;
+        state.lastParams.p_artist=s.artist;
+
+        state.refineLevel=1;
+        state.autoSongRefine=false;
+        state.vtuberRefineCache=null;
+
+        await runSearch(1);
+        await buildRefineArea();
+      }
+    );
+
+    dom.refineArea.appendChild(btn);
+  });
 }
 
-async function buildRefineVtuber(){
 
-  dom.refineArea.innerHTML="";
-  dom.refineLabel.innerText="▼ メンバーで絞り込み";
+async function buildRefineVtuber(){
+  if(state.baseParams?.p_vtuber_ids) return;
 
   if(!state.vtuberRefineCache){
 
-    state.vtuberRefineCache =
-      await fetchRefineVtuber({
-        p_song: state.lastParams.p_song,
-        p_artist: state.lastParams.p_artist,
-        p_vtuber_ids: null,
-        p_vtuber_mode: state.lastParams.p_vtuber_mode,
-        p_external_mode: state.lastParams.p_external_mode,
-        p_date_from: state.lastParams.p_date_from,
-        p_date_to: state.lastParams.p_date_to
-      });
+    state.vtuberRefineCache = await fetchRefineVtuber({
+      p_song:state.lastParams.p_song,
+      p_artist:state.lastParams.p_artist,
+      p_vtuber_ids:state.lastParams.p_vtuber_ids,
+      p_vtuber_mode:state.lastParams.p_vtuber_mode,
+      p_external_mode:state.lastParams.p_external_mode,
+      p_date_from:state.lastParams.p_date_from,
+      p_date_to:state.lastParams.p_date_to
+    });
   }
 
   const vtubers=state.vtuberRefineCache;
 
   if(!vtubers.length) return;
 
+  dom.refineArea.innerHTML="";
+  dom.refineLabel.innerText="▼ メンバーで絞り込み";
+
   vtubers.forEach(v=>{
 
     const btn=createRefineBtn(
       `${v.vtuber_name} : ${v.count}`,
-      async()=>{
+      async ()=>{
 
-        if(state.lastParams.p_vtuber_ids &&
-          state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
-
-          state.lastParams.p_vtuber_ids=null;
-          state.refineLevel=1;
-
-        }else{
-
-          state.lastParams.p_vtuber_ids=[v.vtuber_id];
-          state.lastParams.p_vtuber_mode="OR";
-          state.refineLevel=2;
-        }
+        state.lastParams.p_vtuber_ids=[v.vtuber_id];
+        state.lastParams.p_vtuber_mode="OR";
+        state.refineLevel=2;
 
         await runSearch(1);
-        buildRefineVtuber();
+        await buildRefineArea();
       }
     );
 
-    btn.classList.add(vtuberClassMap[v.vtuber_name]||"other");
-
-    if(state.lastParams.p_vtuber_ids &&
-       state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
+    if(state.lastParams.p_vtuber_ids?.[0]===v.vtuber_id){
       btn.classList.add("active-refine");
     }
+
+    btn.classList.add(vtuberClassMap[v.vtuber_name]||"other");
 
     dom.refineArea.appendChild(btn);
   });
 }
+
 
 function createRefineBtn(label,fn){
 
@@ -427,6 +438,7 @@ function createRefineBtn(label,fn){
 
   return btn;
 }
+
 
 async function handleRefineBack(){
 
@@ -440,6 +452,9 @@ async function handleRefineBack(){
     state.lastParams={...state.baseParams};
     state.refineLevel=0;
   }
+
+  state.vtuberRefineCache=null;
+  state.songRefineCache=null;
 
   await runSearch(1);
   await buildRefineArea();
