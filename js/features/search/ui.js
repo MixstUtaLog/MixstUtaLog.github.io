@@ -7,15 +7,39 @@ import {
 import { state } from "./state.js";
 
 
-export function initDateDefault(){
-  const today = new Date();
-  const yyyy=today.getFullYear();
-  const mm=String(today.getMonth()+1).padStart(2,"0");
-  const dd=String(today.getDate()).padStart(2,"0");
-  document.getElementById("date_to").value = `${yyyy}-${mm}-${dd}`;
-}
+const dom = {
+  song: document.getElementById("song"),
+  artist: document.getElementById("artist"),
+  searchBtn: document.getElementById("searchBtn"),
+  message: document.getElementById("message"),
+  result: document.getElementById("result"),
 
-state.refineLevel = 0;
+  refineArea: document.getElementById("refineArea"),
+  refineLabel: document.getElementById("refineLabel"),
+  refineBackBtn: document.getElementById("refineBackBtn"),
+
+  sortColumn: document.getElementById("sort_column"),
+  sortOrder: document.getElementById("sort_order"),
+
+  pageInput: document.getElementById("pageInput"),
+  maxPage: document.getElementById("maxPage"),
+  totalCount: document.getElementById("totalCount"),
+
+  prevPage: document.getElementById("prevPage"),
+  nextPage: document.getElementById("nextPage"),
+  prevPageBottom: document.getElementById("prevPageBottom"),
+  nextPageBottom: document.getElementById("nextPageBottom"),
+
+  resultControls: document.getElementById("resultControls"),
+  bottomPagination: document.getElementById("bottomPagination"),
+
+  vtuberMode: document.getElementById("vtuber_mode"),
+  externalMode: document.getElementById("external_mode"),
+
+  dateFrom: document.getElementById("date_from"),
+  dateTo: document.getElementById("date_to")
+};
+
 
 const vtuberClassMap = {
   "空奏イト": "ito",
@@ -33,323 +57,390 @@ const vtuberOrder = [
   "星乃りむ","成海ミャオ","琴宮いおり","渚沢シチ"
 ];
 
-function validateSearchInput(){
-  const song = document.getElementById("song").value.trim();
-  const artist = document.getElementById("artist").value.trim();
-  const btn = document.getElementById("searchBtn");
-  const message = document.getElementById("message");
 
-  if(song === "" && artist === ""){
-    btn.disabled = true;
-    message.innerText = "曲名またはアーティスト名を入力してください";
-  }else{
-    btn.disabled = false;
-    message.innerText = "";
-  }
-}
+export function initDateDefault(){
 
-function handleEnterSearch(e){
-  if(e.isComposing || e.keyCode === 229) return;
-  if(e.key === "Enter"){
-    e.preventDefault();
+  const d = new Date();
 
-    const btn = document.getElementById("searchBtn");
-
-    if(!btn.disabled){
-      btn.click();
-    }
-  }
+  dom.dateTo.value =
+    `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 export function initUIEvents(){
-  document.getElementById("searchBtn").addEventListener("click",handleSearch);
 
-  const songInput = document.getElementById("song");
-  const artistInput = document.getElementById("artist");
+  dom.searchBtn.onclick = handleSearch;
 
-  songInput.addEventListener("input", validateSearchInput);
-  artistInput.addEventListener("input", validateSearchInput);
+  dom.song.oninput = validateSearchInput;
+  dom.artist.oninput = validateSearchInput;
 
-  songInput.addEventListener("keydown", handleEnterSearch);
-  artistInput.addEventListener("keydown", handleEnterSearch);
+  dom.song.onkeydown = handleEnterSearch;
+  dom.artist.onkeydown = handleEnterSearch;
 
-  document.getElementById("refineBackBtn").addEventListener("click",handleRefineBack);
-  document.getElementById("prevPage").addEventListener("click",()=>changePage(state.currentPage-1));
-  document.getElementById("nextPage").addEventListener("click",()=>changePage(state.currentPage+1));
+  dom.refineBackBtn.onclick = handleRefineBack;
 
-  document.getElementById("pageInput").addEventListener("change", (e)=>{
-    const page = Number(e.target.value);
-    if(!isNaN(page)) changePage(page);
-  });
+  dom.prevPage.onclick = ()=>changePage(state.currentPage-1);
+  dom.nextPage.onclick = ()=>changePage(state.currentPage+1);
 
-  document.getElementById("sort_column").addEventListener("change",sortRemote);
-  document.getElementById("sort_order").addEventListener("change",sortRemote);
+  dom.prevPageBottom.onclick = ()=>changePage(state.currentPage-1);
+  dom.nextPageBottom.onclick = ()=>changePage(state.currentPage+1);
 
-  document.getElementById("prevPageBottom").addEventListener("click",()=>changePage(state.currentPage-1));
-  document.getElementById("nextPageBottom").addEventListener("click",()=>changePage(state.currentPage+1));
+  dom.pageInput.onchange = e=>{
+    const p = Number(e.target.value);
+    if(!isNaN(p)) changePage(p);
+  };
+
+  dom.sortColumn.onchange = sortRemote;
+  dom.sortOrder.onchange = sortRemote;
 
   validateSearchInput();
 }
 
 
-async function handleSearch(){
-  const song = document.getElementById("song").value.trim();
-  const artist = document.getElementById("artist").value.trim();
+function validateSearchInput(){
 
-  if(song === "" && artist === ""){
-    document.getElementById("message").innerText =
-      "曲名またはアーティスト名を入力してください";
-    return;
+  const song = dom.song.value.trim();
+  const artist = dom.artist.value.trim();
+
+  if(song==="" && artist===""){
+    dom.searchBtn.disabled=true;
+    dom.message.innerText="曲名またはアーティスト名を入力してください";
+  }else{
+    dom.searchBtn.disabled=false;
+    dom.message.innerText="";
   }
-  document.getElementById("result").innerText="検索中...";
-  const params = collectParams();
+}
 
-  state.baseParams = {...params};
-  state.lastParams = {...params};
-  state.refineLevel = 0;
-  state.autoSongRefine = false;
-  state.vtuberRefineCache = null;
-  state.songRefineCache = null;
+function handleEnterSearch(e){
 
-  await fetchPage(1);
-  await buildRefineArea();
-  refreshUI();
+  if(e.isComposing || e.keyCode===229) return;
+
+  if(e.key==="Enter"){
+    e.preventDefault();
+    if(!dom.searchBtn.disabled) dom.searchBtn.click();
+  }
 }
 
 
 function collectParams(){
-  const vtubers = Array.from(document.querySelectorAll(".vtuber:checked"))
-    .map(cb=>Number(cb.value));
+
+  const vtubers =
+    Array.from(document.querySelectorAll(".vtuber:checked"))
+      .map(cb=>Number(cb.value));
 
   return {
-    p_song: document.getElementById("song").value.trim() || null,
-    p_artist: document.getElementById("artist").value.trim() || null,
-    p_vtuber_ids: vtubers.length ? vtubers : null,
-    p_vtuber_mode: document.getElementById("vtuber_mode").value,
-    p_external_mode: document.getElementById("external_mode").value,
-    p_date_from: document.getElementById("date_from").value || null,
-    p_date_to: document.getElementById("date_to").value || null,
-    p_sort_column: document.getElementById("sort_column").value,
-    p_sort_order: document.getElementById("sort_order").value
+    p_song: dom.song.value.trim() || null,
+    p_artist: dom.artist.value.trim() || null,
+    p_vtuber_ids: vtubers.length?vtubers:null,
+    p_vtuber_mode: dom.vtuberMode.value,
+    p_external_mode: dom.externalMode.value,
+    p_date_from: dom.dateFrom.value||null,
+    p_date_to: dom.dateTo.value||null,
+    p_sort_column: dom.sortColumn.value,
+    p_sort_order: dom.sortOrder.value
   };
 }
 
 
-async function fetchPage(page){
-  const params = {...state.lastParams, p_limit: state.pageSize, p_offset: (page-1)*state.pageSize};
+async function runSearch(page=1){
+
+  const params={
+    ...state.lastParams,
+    p_limit: state.pageSize,
+    p_offset: (page-1)*state.pageSize
+  };
+
   const data = await search(params);
-  state.currentData = data;
-  state.currentPage = page;
-  state.totalCount = data.length ? data[0].total_count : 0;
+
+  state.currentData=data;
+  state.currentPage=page;
+  state.totalCount=data.length?data[0].total_count:0;
+
+  refreshUI();
+}
+
+async function handleSearch(){
+
+  if(dom.song.value.trim()==="" && dom.artist.value.trim()===""){
+    dom.message.innerText="曲名またはアーティスト名を入力してください";
+    return;
+  }
+
+  dom.result.innerText="検索中...";
+
+  const params=collectParams();
+
+  state.baseParams={...params};
+  state.lastParams={...params};
+
+  state.refineLevel=0;
+  state.autoSongRefine=false;
+  state.vtuberRefineCache=null;
+  state.songRefineCache=null;
+
+  await runSearch(1);
+  await buildRefineArea();
 }
 
 
 async function changePage(page){
-  const max = Math.ceil(state.totalCount/state.pageSize)||1;
-  page = Math.max(1, Math.min(page, max));
-  await fetchPage(page);
-  refreshUI();
+
+  const max=Math.ceil(state.totalCount/state.pageSize)||1;
+
+  page=Math.max(1,Math.min(page,max));
+
+  await runSearch(page);
+
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-
 async function sortRemote(){
+
   if(!state.lastParams) return;
-  state.lastParams.p_sort_column = document.getElementById("sort_column").value;
-  state.lastParams.p_sort_order = document.getElementById("sort_order").value;
-  await fetchPage(1);
-  refreshUI();
-}
 
+  state.lastParams.p_sort_column=dom.sortColumn.value;
+  state.lastParams.p_sort_order=dom.sortOrder.value;
 
-function updateBackButton(){
-  const btn = document.getElementById("refineBackBtn");
-  btn.style.display = (state.refineLevel === 0 || (state.refineLevel === 1 && state.autoSongRefine)) ? "none" : "inline-block";
-}
-
-
-async function handleRefineBack(){
-  if(state.refineLevel === 2){
-    state.lastParams.p_vtuber_ids = null;
-    state.refineLevel = 1;
-  } else if(state.refineLevel === 1){
-    state.lastParams = {...state.baseParams};
-    state.refineLevel = 0;
-  }
-  await fetchPage(1);
-  await buildRefineArea();
-  refreshUI();
-}
-
-
-function toggleResultControls(){
-  const controls = document.getElementById("resultControls");
-  const bottom = document.getElementById("bottomPagination");
-  const prevBtn = document.getElementById("prevPage");
-  const nextBtn = document.getElementById("nextPage");
-  const prevBottom = document.getElementById("prevPageBottom");
-  const nextBottom = document.getElementById("nextPageBottom");
-
-  if(state.totalCount > 0){
-    controls.style.display = "flex";
-    bottom.style.display = "flex";
-    const max = Math.ceil(state.totalCount/state.pageSize)||1;
-    const disablePrev = state.currentPage <= 1;
-    const disableNext = state.currentPage >= max;
-    prevBtn.disabled = disablePrev;
-    nextBtn.disabled = disableNext;
-    prevBottom.disabled = disablePrev;
-    nextBottom.disabled = disableNext;
-  }else{
-    controls.style.display = "none";
-    bottom.style.display = "none";
-  }
+  await runSearch(1);
 }
 
 
 function refreshUI(){
+
   render(state.currentData);
+
   updatePagination();
   toggleResultControls();
   updateBackButton();
 }
 
+function updateBackButton(){
 
-function render(data){
-  const result = document.getElementById("result");
-  if(!data.length){
-    result.innerHTML = `<div class="no-result">該当する曲は見つかりませんでした</div>`;
-    return;
+  dom.refineBackBtn.style.display=
+    (state.refineLevel===0 ||
+    (state.refineLevel===1 && state.autoSongRefine))
+      ?"none":"inline-block";
+}
+
+function toggleResultControls(){
+
+  if(state.totalCount>0){
+
+    dom.resultControls.style.display="flex";
+    dom.bottomPagination.style.display="flex";
+
+    const max=Math.ceil(state.totalCount/state.pageSize)||1;
+
+    const disablePrev=state.currentPage<=1;
+    const disableNext=state.currentPage>=max;
+
+    [dom.prevPage,dom.prevPageBottom].forEach(b=>b.disabled=disablePrev);
+    [dom.nextPage,dom.nextPageBottom].forEach(b=>b.disabled=disableNext);
+
+  }else{
+
+    dom.resultControls.style.display="none";
+    dom.bottomPagination.style.display="none";
   }
+}
 
-  let html = "";
-  data.forEach(row=>{
-    let url = row.url;
-    if(row.song_time){
-      url += (url.includes("?") ? "&" : "?") + "t=" + row.song_time + "s";
-    }
+function updatePagination(){
 
-    const vtuberHtml = (row.vtuber_names||[]).sort((a,b)=>{
-      const ia=vtuberOrder.indexOf(a), ib=vtuberOrder.indexOf(b);
-      if(ia===-1 && ib===-1) return a.localeCompare(b);
-      if(ia===-1) return 1;
-      if(ib===-1) return -1;
-      return ia-ib;
-    }).map(v=>`<span class="vtuber-tag ${vtuberClassMap[v]||'other'}">${v}</span>`).join("");
+  const max=Math.ceil(state.totalCount/state.pageSize)||1;
 
-    html += `
-    <div class="card">
-      <div class="card-title">
-        ♪ <a href="${url}" target="_blank">${row.song}</a>
-        <span class="artist-name">${row.artist}</span>
-      </div>
-      <div class="card-sub">
-        <div>${row.streamdate}</div>
-        <div>${row.stream_name||""}</div>
-      </div>
-      <div>${vtuberHtml}</div>
-      ${row.memo?`<div class="memo">※ ${row.memo}</div>`:""}
-    </div>`;
-  });
-
-  result.innerHTML = html;
+  dom.pageInput.value=state.currentPage;
+  dom.maxPage.innerText=max;
+  dom.totalCount.innerText=state.totalCount;
 }
 
 
-function updatePagination(){
-  const max = Math.ceil(state.totalCount/state.pageSize)||1;
-  document.getElementById("pageInput").value = state.currentPage;
-  document.getElementById("maxPage").innerText = max;
-  document.getElementById("totalCount").innerText = state.totalCount;
+function render(data){
+
+  if(!data.length){
+    dom.result.innerHTML=`<div class="no-result">該当する曲は見つかりませんでした</div>`;
+    return;
+  }
+
+  dom.result.innerHTML=data.map(createCard).join("");
+}
+
+function createCard(row){
+
+  let url=row.url;
+
+  if(row.song_time){
+    url+=(url.includes("?")?"&":"?")+"t="+row.song_time+"s";
+  }
+
+  const vtuberHtml=(row.vtuber_names||[])
+    .sort(sortVtuber)
+    .map(v=>`<span class="vtuber-tag ${vtuberClassMap[v]||"other"}">${v}</span>`)
+    .join("");
+
+  return `
+  <div class="card">
+    <div class="card-title">
+      ♪ <a href="${url}" target="_blank">${row.song}</a>
+      <span class="artist-name">${row.artist}</span>
+    </div>
+    <div class="card-sub">
+      <div>${row.streamdate}</div>
+      <div>${row.stream_name||""}</div>
+    </div>
+    <div>${vtuberHtml}</div>
+    ${row.memo?`<div class="memo">※ ${row.memo}</div>`:""}
+  </div>`;
+}
+
+function sortVtuber(a,b){
+
+  const ia=vtuberOrder.indexOf(a);
+  const ib=vtuberOrder.indexOf(b);
+
+  if(ia===-1 && ib===-1) return a.localeCompare(b);
+  if(ia===-1) return 1;
+  if(ib===-1) return -1;
+
+  return ia-ib;
 }
 
 
 async function buildRefineArea(){
-  const area = document.getElementById("refineArea");
-  const label = document.getElementById("refineLabel");
-  area.innerHTML = "";
-  label.innerText = "";
+
+  dom.refineArea.innerHTML="";
+  dom.refineLabel.innerText="";
 
   if(!state.songRefineCache){
-    const {p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to} = state.lastParams;
-    state.songRefineCache = await fetchRefineSongArtist({p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to});
+
+    const {p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to}
+      =state.lastParams;
+
+    state.songRefineCache =
+      await fetchRefineSongArtist({
+        p_song,p_artist,p_vtuber_ids,p_vtuber_mode,p_external_mode,p_date_from,p_date_to
+      });
   }
 
-  const songs = state.songRefineCache;
+  const songs=state.songRefineCache;
+
   if(songs.length>1){
-    label.innerText="▼ 曲で絞り込み";
+
+    dom.refineLabel.innerText="▼ 曲で絞り込み";
+
     songs.forEach(s=>{
-      const btn=document.createElement("button");
-      btn.className="refine-btn";
-      btn.innerText=`${s.song} (${s.artist}) : ${s.count}`;
-      btn.onclick=async ()=>{
-        state.lastParams.p_song=s.song;
-        state.lastParams.p_artist=s.artist;
-        state.refineLevel=1;
-        state.autoSongRefine=false;
-        state.vtuberRefineCache=null;
-        await fetchPage(1);
-        await buildRefineVtuber();
-        refreshUI();
-      };
-      area.appendChild(btn);
+      dom.refineArea.appendChild(createRefineBtn(
+        `${s.song} (${s.artist}) : ${s.count}`,
+        async()=>{
+          state.lastParams.p_song=s.song;
+          state.lastParams.p_artist=s.artist;
+
+          state.refineLevel=1;
+          state.autoSongRefine=false;
+          state.vtuberRefineCache=null;
+
+          await runSearch(1);
+          await buildRefineVtuber();
+        }
+      ));
     });
+
     return;
   }
 
   if(songs.length===1){
-    state.lastParams.p_song = songs[0].song;
-    state.lastParams.p_artist = songs[0].artist;
-    state.refineLevel = 1;
-    state.autoSongRefine = true;
-    await fetchPage(1);
+
+    state.lastParams.p_song=songs[0].song;
+    state.lastParams.p_artist=songs[0].artist;
+
+    state.refineLevel=1;
+    state.autoSongRefine=true;
+
+    await runSearch(1);
     await buildRefineVtuber();
   }
 }
 
-
 async function buildRefineVtuber(){
-  const area = document.getElementById("refineArea");
-  const label = document.getElementById("refineLabel");
-  area.innerHTML="";
-  label.innerText="▼ メンバーで絞り込み";
+
+  dom.refineArea.innerHTML="";
+  dom.refineLabel.innerText="▼ メンバーで絞り込み";
 
   if(!state.vtuberRefineCache){
-    state.vtuberRefineCache = await fetchRefineVtuber({
-      p_song: state.lastParams.p_song,
-      p_artist: state.lastParams.p_artist,
-      p_vtuber_ids: null,
-      p_vtuber_mode: state.lastParams.p_vtuber_mode,
-      p_external_mode: state.lastParams.p_external_mode,
-      p_date_from: state.lastParams.p_date_from,
-      p_date_to: state.lastParams.p_date_to
-    });
+
+    state.vtuberRefineCache =
+      await fetchRefineVtuber({
+        p_song: state.lastParams.p_song,
+        p_artist: state.lastParams.p_artist,
+        p_vtuber_ids: null,
+        p_vtuber_mode: state.lastParams.p_vtuber_mode,
+        p_external_mode: state.lastParams.p_external_mode,
+        p_date_from: state.lastParams.p_date_from,
+        p_date_to: state.lastParams.p_date_to
+      });
   }
 
-  const vtubers = state.vtuberRefineCache;
+  const vtubers=state.vtuberRefineCache;
+
   if(!vtubers.length) return;
 
   vtubers.forEach(v=>{
-    const btn=document.createElement("button");
-    btn.className=`refine-btn ${vtuberClassMap[v.vtuber_name]||'other'}`;
-    btn.dataset.vtuberId=v.vtuber_id;
-    btn.innerText=`${v.vtuber_name} : ${v.count}`;
-    if(state.lastParams.p_vtuber_ids && state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
+
+    const btn=createRefineBtn(
+      `${v.vtuber_name} : ${v.count}`,
+      async()=>{
+
+        if(state.lastParams.p_vtuber_ids &&
+          state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
+
+          state.lastParams.p_vtuber_ids=null;
+          state.refineLevel=1;
+
+        }else{
+
+          state.lastParams.p_vtuber_ids=[v.vtuber_id];
+          state.lastParams.p_vtuber_mode="OR";
+          state.refineLevel=2;
+        }
+
+        await runSearch(1);
+        buildRefineVtuber();
+      }
+    );
+
+    btn.classList.add(vtuberClassMap[v.vtuber_name]||"other");
+
+    if(state.lastParams.p_vtuber_ids &&
+       state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
       btn.classList.add("active-refine");
     }
-    btn.onclick=async ()=>{
-      if(state.lastParams.p_vtuber_ids && state.lastParams.p_vtuber_ids[0]===v.vtuber_id){
-        state.lastParams.p_vtuber_ids=null;
-        state.refineLevel=1;
-      }else{
-        state.lastParams.p_vtuber_ids=[v.vtuber_id];
-        state.lastParams.p_vtuber_mode="OR";
-        state.refineLevel=2;
-      }
-      await fetchPage(1);
-      buildRefineVtuber();
-      refreshUI();
-    };
-    area.appendChild(btn);
+
+    dom.refineArea.appendChild(btn);
   });
+}
+
+function createRefineBtn(label,fn){
+
+  const btn=document.createElement("button");
+
+  btn.className="refine-btn";
+  btn.innerText=label;
+  btn.onclick=fn;
+
+  return btn;
+}
+
+async function handleRefineBack(){
+
+  if(state.refineLevel===2){
+
+    state.lastParams.p_vtuber_ids=null;
+    state.refineLevel=1;
+
+  }else if(state.refineLevel===1){
+
+    state.lastParams={...state.baseParams};
+    state.refineLevel=0;
+  }
+
+  await runSearch(1);
+  await buildRefineArea();
 }
