@@ -14,18 +14,24 @@ function createList(input){
 
   const box = input.nextElementSibling;
   const keyword = input.value.trim();
-
-  if(keyword.length < MIN_LENGTH){
-    box.style.display = "none";
-    box.innerHTML = "";
-    return;
-  }
-
   const isSong = input.id === "song";
   const songValue = document.getElementById("song").value.trim();
   const artistValue = document.getElementById("artist").value.trim();
 
   const cacheKey = `${isSong}|${keyword}|${songValue}|${artistValue}`;
+  const min = input.id==="song" && artistValue ? 0 : MIN_LENGTH;
+
+  if(keyword.length < min){
+    const allowEmptySong =
+      input.id === "song" &&
+      artistValue.length > 0;
+
+    if(!allowEmptySong){
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+  }
 
   if(suggestCache.has(cacheKey)){
     render(box, suggestCache.get(cacheKey), isSong);
@@ -129,10 +135,11 @@ export function attachSuggest(id){
 
   });
 
+  input.addEventListener("focus",()=>{createList(input);});
+
 }
 
 function update(items){
-
   items.forEach(i=>i.classList.remove("active"));
 
   if(activeIndex>=0)
@@ -142,10 +149,24 @@ function update(items){
 
 function select(input,item){
 
-  if(input.id==="song")
-    input.value=item.song;
-  else
-    input.value=item.artist;
+  if(input.id==="song"){
+
+    input.value = item.song;
+
+    const artistInput =
+      document.getElementById("artist");
+
+    if(!artistInput.value){
+      artistInput.value = item.artist;
+    }
+
+  }else{
+
+    input.value = item.artist;
+    const songInput = document.getElementById("song");
+    createList(songInput);
+
+  }
 
   input.nextElementSibling.style.display="none";
 }
